@@ -21,12 +21,12 @@ function guardarSaldo() {
   }
   db.collection("saldo").doc("usuario").set({ valor: saldo })
     .then(() => alert("Saldo guardado com sucesso!"))
-    .catch(err => console.error("Erro ao guardar saldo:", err));
+    .catch(err => alert("Erro ao guardar saldo: " + err.message));
 }
 
 // Adicionar despesa
 function adicionarDespesa() {
-  const descricao = document.getElementById("descricao").value;
+  const descricao = document.getElementById("descricao").value.trim();
   const valor = parseFloat(document.getElementById("valor").value);
   const quem = document.getElementById("quem").value;
 
@@ -44,19 +44,21 @@ function adicionarDespesa() {
   .then(() => {
     document.getElementById("descricao").value = "";
     document.getElementById("valor").value = "";
+    alert("Despesa adicionada!");
   })
-  .catch(err => console.error("Erro ao adicionar despesa:", err));
+  .catch(err => alert("Erro ao adicionar despesa: " + err.message));
 }
 
 // Mostrar despesas em tempo real
-db.collection("despesas").orderBy("data").onSnapshot((snapshot) => {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  snapshot.forEach(doc => {
-    const d = doc.data();
-    const item = document.createElement("li");
-    item.innerText = `${d.descricao} - ${d.valor}€ (${d.quem})`;
-    lista.appendChild(item);
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  db.collection("despesas").orderBy("data").onSnapshot((snapshot) => {
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const item = document.createElement("li");
+      item.innerText = `${d.descricao} - ${d.valor}€ (${d.quem})`;
+      lista.appendChild(item);
+    });
+  }, err => alert("Erro ao carregar despesas: " + err.message));
 });
