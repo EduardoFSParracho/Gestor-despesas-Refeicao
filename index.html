@@ -5,7 +5,7 @@
 <title>Gestor de Despesas</title>
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   max-width: 500px;
   margin: auto;
   padding: 20px;
@@ -14,6 +14,8 @@ input, select, button {
   display: block;
   margin: 10px 0;
   padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 button {
   background: #2c7be5;
@@ -22,11 +24,14 @@ button {
   border-radius: 5px;
   cursor: pointer;
 }
+ul {
+  padding-left: 20px;
+}
 </style>
 
-<!-- Firebase via CDN -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<!-- Firebase compat via CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
 </head>
 <body>
@@ -35,7 +40,7 @@ button {
 
 <h2>Saldo inicial</h2>
 <input id="saldo" type="number" placeholder="Ex: 500">
-<button onclick="guardarSaldo()">Guardar saldo</button>
+<button type="button" onclick="guardarSaldo()">Guardar saldo</button>
 
 <h2>Adicionar despesa</h2>
 <input id="descricao" placeholder="Descrição">
@@ -44,7 +49,7 @@ button {
   <option>Eduardo</option>
   <option>Namorada</option>
 </select>
-<button onclick="adicionarDespesa()">Adicionar despesa</button>
+<button type="button" onclick="adicionarDespesa()">Adicionar despesa</button>
 
 <h2>Lista de despesas</h2>
 <ul id="lista"></ul>
