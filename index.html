@@ -2,106 +2,387 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestor de Despesas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body {
-  font-family: Arial, sans-serif;
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-}
-input, select, button {
-  display: block;
-  margin: 10px 0;
-  padding: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-button {
-  background: #2c7be5;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-button:hover {
-  background: #1a5bbf;
-}
-ul {
-  padding-left: 20px;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Tabela de saldos */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
-}
-th {
-  background: #2c7be5;
-  color: white;
-}
-tr:nth-child(even) {
-  background: #f2f2f2;
-}
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3248;
+    --accent: #6c8cff;
+    --accent2: #ff7eb3;
+    --green: #4ade80;
+    --text: #e8eaf6;
+    --muted: #7b82a8;
+    --radius: 14px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .logo {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  header span { font-size: 13px; color: var(--muted); margin-left: 4px; }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .card h2 {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 11px 14px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108, 140, 255, 0.15);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+  }
+  select option { background: var(--surface2); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--accent), #8fa8ff);
+    color: white;
+    border: none;
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.2px;
+  }
+  button:hover { opacity: 0.85; }
+  button:active { transform: scale(0.98); }
+
+  .saldo-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .saldo-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .saldo-card .name {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .saldo-card .amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--green);
+    letter-spacing: -1px;
+  }
+  .saldo-card.luciana .amount { color: var(--accent2); }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead tr { background: var(--surface2); }
+  th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(108,140,255,0.04); transition: background 0.15s; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-eduardo { color: var(--green); border: 1px solid rgba(74,222,128,0.25); background: rgba(74,222,128,0.08); }
+  .badge-luciana  { color: var(--accent2); border: 1px solid rgba(255,126,179,0.25); background: rgba(255,126,179,0.08); }
+
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: rgba(108,140,255,0.1);
+    border: 1px solid rgba(108,140,255,0.2);
+    color: #a5b8ff;
+  }
+
+  .valor-cell {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent2);
+  }
+
+  .date-cell {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+
+  @media (max-width: 700px) {
+    .container { padding: 20px 16px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    .saldo-cards { grid-template-columns: 1fr 1fr; }
+  }
 </style>
-<!-- Firebase compat via CDN -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-<h1>💸 Gestor de Despesas</h1>
 
-<h2>💰 Adicionar Saldo</h2>
-<input id="saldo" type="number" placeholder="Valor a adicionar (Ex: 50)">
-<select id="quemSaldo">
-  <option value="Eduardo">Eduardo</option>
-  <option value="Luciana">Luciana</option>
-</select>
-<button type="button" onclick="guardarSaldo()">Guardar saldo</button>
+<header>
+  <div class="logo">💸</div>
+  <h1>Gestor de Despesas <span>— Eduardo & Luciana</span></h1>
+</header>
 
-<h2>📊 Tabela de Saldos</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Pessoa</th>
-      <th>Total Adicionado</th>
-    </tr>
-  </thead>
-  <tbody id="tabelaSaldos">
-    <tr><td>Eduardo</td><td id="saldoEduardo">0.00 €</td></tr>
-    <tr><td>Luciana</td><td id="saldoLuciana">0.00 €</td></tr>
-  </tbody>
-</table>
+<div class="container">
 
-<h2>➕ Adicionar Despesa</h2>
-<input id="descricao" placeholder="Descrição">
-<input id="valor" type="number" placeholder="Valor (€)">
-<select id="categoria">
-  <option value="">-- Categoria --</option>
-  <option value="Compras">🛒 Compras</option>
-  <option value="Jantares">🍽️ Jantares</option>
-  <option value="Lazer">🎉 Lazer</option>
-  <option value="Autocarro">🚌 Autocarro</option>
-  <option value="Festas">🥳 Festas</option>
-  <option value="Roupa">👗 Roupa</option>
-  <option value="Saúde">🏥 Saúde</option>
-  <option value="Cafés">☕ Cafés</option>
-  <option value="Outros">📦 Outros</option>
-</select>
-<select id="quem">
-  <option value="Eduardo">Eduardo</option>
-  <option value="Luciana">Luciana</option>
-</select>
-<button type="button" onclick="adicionarDespesa()">Adicionar despesa</button>
+  <div class="grid-2">
 
-<h2>📋 Lista de Despesas</h2>
-<ul id="lista"></ul>
+    <!-- Saldo -->
+    <div class="card">
+      <h2>Saldos</h2>
+      <div class="saldo-cards">
+        <div class="saldo-card">
+          <div class="name">Eduardo</div>
+          <div class="amount" id="saldoEduardo">0,00 €</div>
+        </div>
+        <div class="saldo-card luciana">
+          <div class="name">Luciana</div>
+          <div class="amount" id="saldoLuciana">0,00 €</div>
+        </div>
+      </div>
+      <label>Valor a adicionar</label>
+      <input id="saldo" type="number" placeholder="Ex: 50">
+      <label>Pessoa</label>
+      <select id="quemSaldo">
+        <option value="Eduardo">Eduardo</option>
+        <option value="Luciana">Luciana</option>
+      </select>
+      <button type="button" onclick="guardarSaldo()">+ Adicionar Saldo</button>
+    </div>
+
+    <!-- Nova Despesa -->
+    <div class="card">
+      <h2>Nova Despesa</h2>
+      <label>Descrição</label>
+      <input id="descricao" placeholder="Ex: Supermercado Continente">
+      <div class="form-row">
+        <div>
+          <label>Valor (€)</label>
+          <input id="valor" type="number" placeholder="0.00">
+        </div>
+        <div>
+          <label>Data</label>
+          <input id="data" type="date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Categoria</label>
+          <select id="categoria">
+            <option value="">-- Selecionar --</option>
+            <option value="Compras">🛒 Compras</option>
+            <option value="Jantares">🍽️ Jantares</option>
+            <option value="Lazer">🎉 Lazer</option>
+            <option value="Autocarro">🚌 Autocarro</option>
+            <option value="Festas">🥳 Festas</option>
+            <option value="Roupa">👗 Roupa</option>
+            <option value="Saúde">🏥 Saúde</option>
+            <option value="Cafés">☕ Cafés</option>
+            <option value="Outros">📦 Outros</option>
+          </select>
+        </div>
+        <div>
+          <label>Pessoa</label>
+          <select id="quem">
+            <option value="Eduardo">Eduardo</option>
+            <option value="Luciana">Luciana</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" onclick="adicionarDespesa()">+ Adicionar Despesa</button>
+    </div>
+
+  </div>
+
+  <!-- Tabela de despesas -->
+  <div class="card">
+    <div class="section-title">Registo de Despesas</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Pessoa</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaDespesas">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <div class="icon">📭</div>
+                Sem despesas registadas ainda.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 
 <script src="script.js"></script>
 </body>
