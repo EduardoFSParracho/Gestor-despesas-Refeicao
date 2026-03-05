@@ -12,53 +12,84 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Guardar saldo inicial
+// Guardar saldo
 function guardarSaldo() {
-  const saldo = parseFloat(document.getElementById("saldo").value);
-  if (isNaN(saldo)) {
+  const valor = parseFloat(document.getElementById("saldo").value);
+  const quem = document.getElementById("quemSaldo").value;
+
+  if (isNaN(valor) || valor <= 0) {
     alert("Insere um valor válido!");
     return;
   }
-  db.collection("saldo").doc("usuario").set({ valor: saldo })
-    .then(() => alert("Saldo guardado com sucesso!"))
-    .catch(err => alert("Erro ao guardar saldo: " + err.message));
+
+  db.collection("saldos").add({
+    valor,
+    quem,
+    data: new Date()
+  })
+  .then(() => {
+    document.getElementById("saldo").value = "";
+    alert("Saldo guardado com sucesso!");
+  })
+  .catch(err => alert("Erro ao guardar saldo: " + err.message));
 }
 
 // Adicionar despesa
 function adicionarDespesa() {
   const descricao = document.getElementById("descricao").value.trim();
   const valor = parseFloat(document.getElementById("valor").value);
+  const categoria = document.getElementById("categoria").value;
   const quem = document.getElementById("quem").value;
 
-  if (!descricao || isNaN(valor)) {
-    alert("Preenche todos os campos corretamente!");
+  if (!descricao || isNaN(valor) || !categoria) {
+    alert("Preenche todos os campos corretamente, incluindo a categoria!");
     return;
   }
 
   db.collection("despesas").add({
     descricao,
     valor,
+    categoria,
     quem,
     data: new Date()
   })
   .then(() => {
     document.getElementById("descricao").value = "";
     document.getElementById("valor").value = "";
+    document.getElementById("categoria").value = "";
     alert("Despesa adicionada!");
   })
   .catch(err => alert("Erro ao adicionar despesa: " + err.message));
 }
 
-// Mostrar despesas em tempo real
+// Atualizar tabela de saldos em tempo real
 document.addEventListener("DOMContentLoaded", () => {
+
+  db.collection("saldos").onSnapshot((snapshot) => {
+    let totalEduardo = 0;
+    let totalLuciana = 0;
+
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      if (d.quem === "Eduardo") totalEduardo += d.valor;
+      if (d.quem === "Luciana") totalLuciana += d.valor;
+    });
+
+    document.getElementById("saldoEduardo").innerText = totalEduardo.toFixed(2) + " €";
+    document.getElementById("saldoLuciana").innerText = totalLuciana.toFixed(2) + " €";
+  }, err => alert("Erro ao carregar saldos: " + err.message));
+
+  // Mostrar despesas em tempo real
   db.collection("despesas").orderBy("data").onSnapshot((snapshot) => {
     const lista = document.getElementById("lista");
     lista.innerHTML = "";
+
     snapshot.forEach(doc => {
       const d = doc.data();
       const item = document.createElement("li");
-      item.innerText = `${d.descricao} - ${d.valor}€ (${d.quem})`;
+      item.innerText = `${d.descricao} - ${d.valor}€ | ${d.categoria} | ${d.quem}`;
       lista.appendChild(item);
     });
   }, err => alert("Erro ao carregar despesas: " + err.message));
+
 });
