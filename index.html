@@ -6,7 +6,7 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  max-width: 500px;
+  max-width: 600px;
   margin: auto;
   padding: 20px;
 }
@@ -24,34 +24,83 @@ button {
   border-radius: 5px;
   cursor: pointer;
 }
+button:hover {
+  background: #1a5bbf;
+}
 ul {
   padding-left: 20px;
 }
-</style>
 
+/* Tabela de saldos */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+}
+th {
+  background: #2c7be5;
+  color: white;
+}
+tr:nth-child(even) {
+  background: #f2f2f2;
+}
+</style>
 <!-- Firebase compat via CDN -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
 </head>
 <body>
+<h1>💸 Gestor de Despesas</h1>
 
-<h1>Gestor de Despesas</h1>
-
-<h2>Saldo inicial</h2>
-<input id="saldo" type="number" placeholder="Ex: 500">
+<h2>💰 Adicionar Saldo</h2>
+<input id="saldo" type="number" placeholder="Valor a adicionar (Ex: 50)">
+<select id="quemSaldo">
+  <option value="Eduardo">Eduardo</option>
+  <option value="Luciana">Luciana</option>
+</select>
 <button type="button" onclick="guardarSaldo()">Guardar saldo</button>
 
-<h2>Adicionar despesa</h2>
+<h2>📊 Tabela de Saldos</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Pessoa</th>
+      <th>Total Adicionado</th>
+    </tr>
+  </thead>
+  <tbody id="tabelaSaldos">
+    <tr><td>Eduardo</td><td id="saldoEduardo">0.00 €</td></tr>
+    <tr><td>Luciana</td><td id="saldoLuciana">0.00 €</td></tr>
+  </tbody>
+</table>
+
+<h2>➕ Adicionar Despesa</h2>
 <input id="descricao" placeholder="Descrição">
-<input id="valor" type="number" placeholder="Valor">
+<input id="valor" type="number" placeholder="Valor (€)">
+<select id="categoria">
+  <option value="">-- Categoria --</option>
+  <option value="Compras">🛒 Compras</option>
+  <option value="Jantares">🍽️ Jantares</option>
+  <option value="Lazer">🎉 Lazer</option>
+  <option value="Autocarro">🚌 Autocarro</option>
+  <option value="Festas">🥳 Festas</option>
+  <option value="Roupa">👗 Roupa</option>
+  <option value="Saúde">🏥 Saúde</option>
+  <option value="Cafés">☕ Cafés</option>
+  <option value="Outros">📦 Outros</option>
+</select>
 <select id="quem">
-  <option>Eduardo</option>
-  <option>Namorada</option>
+  <option value="Eduardo">Eduardo</option>
+  <option value="Luciana">Luciana</option>
 </select>
 <button type="button" onclick="adicionarDespesa()">Adicionar despesa</button>
 
-<h2>Lista de despesas</h2>
+<h2>📋 Lista de Despesas</h2>
 <ul id="lista"></ul>
 
 <script src="script.js"></script>
