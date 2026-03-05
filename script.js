@@ -1,39 +1,3 @@
-let despesas = []
-
-function adicionarDespesa(){
-
-let descricao = document.getElementById("descricao").value
-let valor = document.getElementById("valor").value
-let quem = document.getElementById("quem").value
-
-despesas.push({
-descricao,
-valor,
-quem
-})
-
-mostrarDespesas()
-
-}
-
-function mostrarDespesas(){
-
-let lista = document.getElementById("lista")
-
-lista.innerHTML = ""
-
-despesas.forEach(d => {
-
-let item = document.createElement("li")
-
-item.innerText = d.descricao + " - " + d.valor + "€ (" + d.quem + ")"
-
-lista.appendChild(item)
-
-})
-
-}
-
 // Inicializar Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDQ9mHgSYLmM1Bcp0MNttsRKNbZpLhxMM0",
@@ -48,25 +12,43 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-
+// Guardar saldo inicial
 function guardarSaldo() {
   const saldo = parseFloat(document.getElementById("saldo").value);
-  db.collection("saldo").doc("usuario").set({ valor: saldo });
+  if (isNaN(saldo)) {
+    alert("Insere um valor válido!");
+    return;
+  }
+  db.collection("saldo").doc("usuario").set({ valor: saldo })
+    .then(() => alert("Saldo guardado com sucesso!"))
+    .catch(err => console.error("Erro ao guardar saldo:", err));
 }
 
+// Adicionar despesa à Firestore
 function adicionarDespesa() {
   const descricao = document.getElementById("descricao").value;
   const valor = parseFloat(document.getElementById("valor").value);
   const quem = document.getElementById("quem").value;
+
+  if (!descricao || isNaN(valor)) {
+    alert("Preenche todos os campos corretamente!");
+    return;
+  }
 
   db.collection("despesas").add({
     descricao,
     valor,
     quem,
     data: new Date()
-  });
+  })
+  .then(() => {
+    document.getElementById("descricao").value = "";
+    document.getElementById("valor").value = "";
+  })
+  .catch(err => console.error("Erro ao adicionar despesa:", err));
 }
 
+// Mostrar despesas em tempo real
 db.collection("despesas").orderBy("data").onSnapshot((snapshot) => {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
@@ -78,5 +60,3 @@ db.collection("despesas").orderBy("data").onSnapshot((snapshot) => {
     lista.appendChild(item);
   });
 });
-
-
