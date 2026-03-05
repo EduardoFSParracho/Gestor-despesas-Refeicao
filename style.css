@@ -1,35 +1,19 @@
-let despesas = []
-
-function adicionarDespesa(){
-
-let descricao = document.getElementById("descricao").value
-let valor = document.getElementById("valor").value
-let quem = document.getElementById("quem").value
-
-despesas.push({
-descricao,
-valor,
-quem
-})
-
-mostrarDespesas()
-
+body{
+font-family: Arial;
+max-width:500px;
+margin:auto;
+padding:20px;
 }
 
-function mostrarDespesas(){
+input,select,button{
+display:block;
+margin:10px 0;
+padding:8px;
+}
 
-let lista = document.getElementById("lista")
-
-lista.innerHTML = ""
-
-despesas.forEach(d => {
-
-let item = document.createElement("li")
-
-item.innerText = d.descricao + " - " + d.valor + "€ (" + d.quem + ")"
-
-lista.appendChild(item)
-
-})
-
+button{
+background:#2c7be5;
+color:white;
+border:none;
+border-radius:5px;
 }
