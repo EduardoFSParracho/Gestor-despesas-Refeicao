@@ -1,38 +1,54 @@
 <!DOCTYPE html>
-<html>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<html lang="pt">
 <head>
 <meta charset="UTF-8">
 <title>Gestor de Despesas</title>
-<link rel="stylesheet" href="style.css">
-</head>
+<style>
+body {
+  font-family: Arial;
+  max-width: 500px;
+  margin: auto;
+  padding: 20px;
+}
+input, select, button {
+  display: block;
+  margin: 10px 0;
+  padding: 8px;
+}
+button {
+  background: #2c7be5;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+</style>
 
+<!-- Firebase via CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
+</head>
 <body>
 
 <h1>Gestor de Despesas</h1>
 
 <h2>Saldo inicial</h2>
-<input id="saldo" type="number">
+<input id="saldo" type="number" placeholder="Ex: 500">
 <button onclick="guardarSaldo()">Guardar saldo</button>
 
-<h2>Nova despesa</h2>
-
+<h2>Adicionar despesa</h2>
 <input id="descricao" placeholder="Descrição">
 <input id="valor" type="number" placeholder="Valor">
-
 <select id="quem">
-<option>Eduardo</option>
-<option>Namorada</option>
+  <option>Eduardo</option>
+  <option>Namorada</option>
 </select>
-
-<button onclick="adicionarDespesa()">Adicionar</button>
+<button onclick="adicionarDespesa()">Adicionar despesa</button>
 
 <h2>Lista de despesas</h2>
-
 <ul id="lista"></ul>
 
 <script src="script.js"></script>
-
 </body>
 </html>
