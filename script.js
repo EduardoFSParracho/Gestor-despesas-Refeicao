@@ -1,4 +1,4 @@
-// Inicializar Firebase
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDQ9mHgSYLmM1Bcp0MNttsRKNbZpLhxMM0",
   authDomain: "gestor-despesas-refeicao.firebaseapp.com",
@@ -8,7 +8,7 @@ const firebaseConfig = {
   appId: "1:770194270939:web:5d34fab2d2350289c1fafe"
 };
 
-// Inicializar app
+// Inicializar Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -24,7 +24,7 @@ function guardarSaldo() {
     .catch(err => console.error("Erro ao guardar saldo:", err));
 }
 
-// Adicionar despesa à Firestore
+// Adicionar despesa
 function adicionarDespesa() {
   const descricao = document.getElementById("descricao").value;
   const valor = parseFloat(document.getElementById("valor").value);
