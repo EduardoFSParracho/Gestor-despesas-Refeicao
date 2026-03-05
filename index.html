@@ -1,1 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gestor de Despesas</title>
+<link rel="stylesheet" href="style.css">
+</head>
 
+<body>
+
+<h1>Gestor de Despesas</h1>
+
+<h2>Saldo inicial</h2>
+<input id="saldo" type="number">
+<button onclick="guardarSaldo()">Guardar saldo</button>
+
+<h2>Nova despesa</h2>
+
+<input id="descricao" placeholder="Descrição">
+<input id="valor" type="number" placeholder="Valor">
+
+<select id="quem">
+<option>Eduardo</option>
+<option>Namorada</option>
+</select>
+
+<button onclick="adicionarDespesa()">Adicionar</button>
+
+<h2>Lista de despesas</h2>
+
+<ul id="lista"></ul>
+
+<script src="script.js"></script>
+
+</body>
+</html>
