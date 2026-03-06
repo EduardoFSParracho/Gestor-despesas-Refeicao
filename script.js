@@ -1,5 +1,10 @@
+// ══════════════════════════════════
+// CONFIGURAÇÃO — muda o código aqui
+// ══════════════════════════════════
+var CODIGO_CORRETO = "1003"; // ← altera para o código que quiseres
+
 // ── Firebase ──────────────────────────────────────────────
-const firebaseConfig = {
+var firebaseConfig = {
   apiKey: "AIzaSyDQ9mHgSYLmM1Bcp0MNttsRKNbZpLhxMM0",
   authDomain: "gestor-despesas-refeicao.firebaseapp.com",
   projectId: "gestor-despesas-refeicao",
@@ -8,123 +13,173 @@ const firebaseConfig = {
   appId: "1:770194270939:web:5d34fab2d2350289c1fafe"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+var db = firebase.firestore();
 
-// ── Helpers ───────────────────────────────────────────────
-const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-               "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+// ══════════════════════════════════
+// PIN / LOCK
+// ══════════════════════════════════
+var pinAtual = "";
+
+function pinPress(num) {
+  if (pinAtual.length >= CODIGO_CORRETO.length) return;
+  pinAtual += num;
+  atualizarDots(false);
+  if (pinAtual.length === CODIGO_CORRETO.length) {
+    setTimeout(function() { verificarPin(); }, 120);
+  }
+}
+
+function pinDel() {
+  pinAtual = pinAtual.slice(0, -1);
+  atualizarDots(false);
+  document.getElementById("pin-error").textContent = "";
+}
+
+function atualizarDots(erro) {
+  for (var i = 0; i < CODIGO_CORRETO.length; i++) {
+    var dot = document.getElementById("dot-" + i);
+    dot.className = "pin-dot";
+    if (erro) dot.classList.add("error");
+    else if (i < pinAtual.length) dot.classList.add("filled");
+  }
+}
+
+function verificarPin() {
+  if (pinAtual === CODIGO_CORRETO) {
+    sessionStorage.setItem("acesso", "ok");
+    mostrarApp();
+  } else {
+    atualizarDots(true);
+    document.getElementById("pin-error").textContent = "Código incorreto. Tenta outra vez.";
+    setTimeout(function() {
+      pinAtual = "";
+      atualizarDots(false);
+      document.getElementById("pin-error").textContent = "";
+    }, 1200);
+  }
+}
+
+function mostrarApp() {
+  document.getElementById("lock-page").style.display = "none";
+  document.getElementById("app-page").style.display  = "block";
+  iniciarApp();
+}
+
+function bloquear() {
+  sessionStorage.removeItem("acesso");
+  pinAtual = "";
+  atualizarDots(false);
+  document.getElementById("pin-error").textContent = "";
+  document.getElementById("lock-page").style.display = "flex";
+  document.getElementById("app-page").style.display  = "none";
+  pararListeners();
+}
+
+// Verificar se já tem sessão ativa (dentro do mesmo separador)
+document.addEventListener("DOMContentLoaded", function() {
+  if (sessionStorage.getItem("acesso") === "ok") {
+    mostrarApp();
+  }
+});
+
+// ══════════════════════════════════
+// APP
+// ══════════════════════════════════
+var unsubscribers = [];
+
+var MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+             "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 function today() {
   return new Date().toISOString().split("T")[0];
 }
 function fmtDate(str) {
   if (!str) return "—";
-  const p = str.split("-");
+  var p = str.split("-");
   return p[2] + "/" + p[1] + "/" + p[0];
 }
 function fmtMes(yyyymm) {
-  const p = yyyymm.split("-");
+  var p = yyyymm.split("-");
   return MESES[parseInt(p[1]) - 1] + " " + p[0];
 }
 function fmtVal(v) {
   return parseFloat(v).toFixed(2).replace(".", ",") + " €";
 }
 
-// ── Saldo UI ──────────────────────────────────────────────
 function setSaldoUI(id, valor) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   el.textContent = fmtVal(valor);
   el.className = "amount " + (valor >= 0 ? "pos" : "neg");
 }
 
-// ── Recalcular saldo ──────────────────────────────────────
 function recalcular(pessoa) {
-  const elId = pessoa === "Eduardo" ? "saldoEduardo" : "saldoLuciana";
-  let ent = 0, desp = 0;
-
-  db.collection("saldos").where("quem", "==", pessoa).get()
+  var elId = pessoa === "Eduardo" ? "saldoEduardo" : "saldoLuciana";
+  var ent = 0, desp = 0;
+  db.collection("saldos").where("quem","==",pessoa).get()
     .then(function(s) {
       s.forEach(function(d) { ent += d.data().valor; });
-      return db.collection("despesas").where("quem", "==", pessoa).get();
+      return db.collection("despesas").where("quem","==",pessoa).get();
     })
     .then(function(s2) {
       s2.forEach(function(d) { desp += d.data().valor; });
       setSaldoUI(elId, ent - desp);
-    })
-    .catch(function(err) { console.error("Erro saldo:", err); });
+    });
 }
 
-// ── Render: tabela saldos ─────────────────────────────────
 function renderSaldos(pessoa, docs) {
-  const id = pessoa === "Eduardo" ? "tb-saldos-edu" : "tb-saldos-luc";
-  const tb = document.getElementById(id);
-
+  var id = pessoa === "Eduardo" ? "tb-saldos-edu" : "tb-saldos-luc";
+  var tb = document.getElementById(id);
   if (!docs.length) {
     tb.innerHTML = '<tr><td colspan="2"><div class="empty">Sem registos.</div></td></tr>';
     return;
   }
-
-  // ordenar por data descendente no JS
-  const sorted = docs.slice().sort(function(a, b) {
-    return (b.data().dataManual || "").localeCompare(a.data().dataManual || "");
+  var sorted = docs.slice().sort(function(a,b) {
+    return (b.data().dataManual||"").localeCompare(a.data().dataManual||"");
   });
-
   tb.innerHTML = "";
   sorted.forEach(function(doc) {
-    const d = doc.data();
-    const tr = document.createElement("tr");
+    var d = doc.data();
+    var tr = document.createElement("tr");
     tr.innerHTML = '<td class="mono c-muted">' + fmtDate(d.dataManual) + '</td>' +
                    '<td class="mono c-green">+ ' + fmtVal(d.valor) + '</td>';
     tb.appendChild(tr);
   });
 }
 
-// ── Render: despesas agrupadas por mês ───────────────────
 function renderDespesas(pessoa, docs) {
-  const id = pessoa === "Eduardo" ? "tb-desp-edu" : "tb-desp-luc";
-  const tb = document.getElementById(id);
-
+  var id = pessoa === "Eduardo" ? "tb-desp-edu" : "tb-desp-luc";
+  var tb = document.getElementById(id);
   if (!docs.length) {
     tb.innerHTML = '<tr><td colspan="4"><div class="empty">Sem despesas.</div></td></tr>';
     return;
   }
-
-  // agrupar por YYYY-MM
-  const grupos = {};
+  var grupos = {};
   docs.forEach(function(doc) {
-    const d = doc.data();
-    const key = (d.dataManual || "0000-00").substring(0, 7);
+    var d = doc.data();
+    var key = (d.dataManual || "0000-00").substring(0,7);
     if (!grupos[key]) grupos[key] = [];
     grupos[key].push(d);
   });
-
-  // ordenar meses do mais recente para o mais antigo
-  const meses = Object.keys(grupos).sort(function(a, b) { return b.localeCompare(a); });
-
+  var meses = Object.keys(grupos).sort(function(a,b) { return b.localeCompare(a); });
   tb.innerHTML = "";
   meses.forEach(function(mes) {
-    const lista = grupos[mes].sort(function(a, b) {
-      return (b.dataManual || "").localeCompare(a.dataManual || "");
+    var lista = grupos[mes].sort(function(a,b) {
+      return (b.dataManual||"").localeCompare(a.dataManual||"");
     });
-    const total = lista.reduce(function(s, d) { return s + d.valor; }, 0);
-
-    // cabeçalho do mês
-    const trH = document.createElement("tr");
+    var total = lista.reduce(function(s,d) { return s + d.valor; }, 0);
+    var trH = document.createElement("tr");
     trH.className = "month-row";
     trH.innerHTML = '<td colspan="4">📅 ' + fmtMes(mes) + '</td>';
     tb.appendChild(trH);
-
     lista.forEach(function(d) {
-      const tr = document.createElement("tr");
+      var tr = document.createElement("tr");
       tr.innerHTML = '<td class="mono c-muted">' + fmtDate(d.dataManual) + '</td>' +
                      '<td>' + d.descricao + '</td>' +
                      '<td><span class="cat-badge">' + d.categoria + '</span></td>' +
                      '<td class="mono c-red">− ' + fmtVal(d.valor) + '</td>';
       tb.appendChild(tr);
     });
-
-    // total do mês
-    const trT = document.createElement("tr");
+    var trT = document.createElement("tr");
     trT.className = "month-total-row";
     trT.innerHTML = '<td colspan="3">Total ' + fmtMes(mes) + '</td>' +
                     '<td class="mono c-red">− ' + fmtVal(total) + '</td>';
@@ -132,48 +187,33 @@ function renderDespesas(pessoa, docs) {
   });
 }
 
-// ── Guardar saldo ─────────────────────────────────────────
 function guardarSaldo(pessoa) {
-  const p = pessoa === "Eduardo" ? "edu" : "luc";
-  const val = parseFloat(document.getElementById(p + "-saldo-val").value);
-  const data = document.getElementById(p + "-saldo-data").value;
-
+  var p = pessoa === "Eduardo" ? "edu" : "luc";
+  var val  = parseFloat(document.getElementById(p + "-saldo-val").value);
+  var data = document.getElementById(p + "-saldo-data").value;
   if (isNaN(val) || val <= 0) { alert("Insere um valor válido!"); return; }
   if (!data) { alert("Seleciona uma data!"); return; }
-
-  db.collection("saldos").add({
-    valor: val,
-    quem: pessoa,
-    dataManual: data,
-    data: new Date(data)
-  })
-  .then(function() {
-    document.getElementById(p + "-saldo-val").value = "";
-    document.getElementById(p + "-saldo-data").value = today();
-  })
-  .catch(function(err) { alert("Erro: " + err.message); });
+  db.collection("saldos").add({ valor: val, quem: pessoa, dataManual: data, data: new Date(data) })
+    .then(function() {
+      document.getElementById(p + "-saldo-val").value  = "";
+      document.getElementById(p + "-saldo-data").value = today();
+    })
+    .catch(function(err) { alert("Erro: " + err.message); });
 }
 
-// ── Adicionar despesa ─────────────────────────────────────
 function adicionarDespesa(pessoa) {
-  const p = pessoa === "Eduardo" ? "edu" : "luc";
-  const desc = document.getElementById(p + "-desc").value.trim();
-  const val  = parseFloat(document.getElementById(p + "-val").value);
-  const data = document.getElementById(p + "-data").value;
-  const cat  = document.getElementById(p + "-cat").value;
-
-  if (!desc)              { alert("Preenche a descrição!"); return; }
-  if (isNaN(val)||val<=0) { alert("Insere um valor válido!"); return; }
-  if (!data)              { alert("Seleciona uma data!"); return; }
-  if (!cat)               { alert("Seleciona uma categoria!"); return; }
-
+  var p    = pessoa === "Eduardo" ? "edu" : "luc";
+  var desc = document.getElementById(p + "-desc").value.trim();
+  var val  = parseFloat(document.getElementById(p + "-val").value);
+  var data = document.getElementById(p + "-data").value;
+  var cat  = document.getElementById(p + "-cat").value;
+  if (!desc)               { alert("Preenche a descrição!"); return; }
+  if (isNaN(val) || val<=0){ alert("Insere um valor válido!"); return; }
+  if (!data)               { alert("Seleciona uma data!"); return; }
+  if (!cat)                { alert("Seleciona uma categoria!"); return; }
   db.collection("despesas").add({
-    descricao: desc,
-    valor: val,
-    categoria: cat,
-    quem: pessoa,
-    dataManual: data,
-    data: new Date(data)
+    descricao: desc, valor: val, categoria: cat,
+    quem: pessoa, dataManual: data, data: new Date(data)
   })
   .then(function() {
     document.getElementById(p + "-desc").value = "";
@@ -184,29 +224,27 @@ function adicionarDespesa(pessoa) {
   .catch(function(err) { alert("Erro: " + err.message); });
 }
 
-// ── Init ──────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", function() {
+function pararListeners() {
+  unsubscribers.forEach(function(u) { u(); });
+  unsubscribers = [];
+}
 
-  // datas default para hoje
+function iniciarApp() {
+  pararListeners();
   ["edu-saldo-data","luc-saldo-data","edu-data","luc-data"].forEach(function(id) {
     document.getElementById(id).value = today();
   });
-
-  // listeners em tempo real — SEM orderBy para não precisar de índices
-  ["Eduardo", "Luciana"].forEach(function(pessoa) {
-
-    db.collection("saldos")
-      .where("quem", "==", pessoa)
+  ["Eduardo","Luciana"].forEach(function(pessoa) {
+    var u1 = db.collection("saldos").where("quem","==",pessoa)
       .onSnapshot(function(snap) {
         renderSaldos(pessoa, snap.docs);
         recalcular(pessoa);
-      }, function(err) { console.error("Erro saldos:", err); });
-
-    db.collection("despesas")
-      .where("quem", "==", pessoa)
+      });
+    var u2 = db.collection("despesas").where("quem","==",pessoa)
       .onSnapshot(function(snap) {
         renderDespesas(pessoa, snap.docs);
         recalcular(pessoa);
-      }, function(err) { console.error("Erro despesas:", err); });
+      });
+    unsubscribers.push(u1, u2);
   });
-});
+}
