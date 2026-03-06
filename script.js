@@ -17,18 +17,15 @@ const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
 function today() {
   return new Date().toISOString().split("T")[0];
 }
-
 function fmtDate(str) {
   if (!str) return "—";
   const p = str.split("-");
   return p[2] + "/" + p[1] + "/" + p[0];
 }
-
 function fmtMes(yyyymm) {
   const p = yyyymm.split("-");
   return MESES[parseInt(p[1]) - 1] + " " + p[0];
 }
-
 function fmtVal(v) {
   return parseFloat(v).toFixed(2).replace(".", ",") + " €";
 }
@@ -44,25 +41,36 @@ function setSaldoUI(id, valor) {
 function recalcular(pessoa) {
   const elId = pessoa === "Eduardo" ? "saldoEduardo" : "saldoLuciana";
   let ent = 0, desp = 0;
-  db.collection("saldos").where("quem","==",pessoa).get()
-    .then(s => { s.forEach(d => ent += d.data().valor);
-      db.collection("despesas").where("quem","==",pessoa).get()
-        .then(s2 => { s2.forEach(d => desp += d.data().valor);
-          setSaldoUI(elId, ent - desp);
-        });
-    });
+
+  db.collection("saldos").where("quem", "==", pessoa).get()
+    .then(function(s) {
+      s.forEach(function(d) { ent += d.data().valor; });
+      return db.collection("despesas").where("quem", "==", pessoa).get();
+    })
+    .then(function(s2) {
+      s2.forEach(function(d) { desp += d.data().valor; });
+      setSaldoUI(elId, ent - desp);
+    })
+    .catch(function(err) { console.error("Erro saldo:", err); });
 }
 
 // ── Render: tabela saldos ─────────────────────────────────
 function renderSaldos(pessoa, docs) {
   const id = pessoa === "Eduardo" ? "tb-saldos-edu" : "tb-saldos-luc";
   const tb = document.getElementById(id);
+
   if (!docs.length) {
     tb.innerHTML = '<tr><td colspan="2"><div class="empty">Sem registos.</div></td></tr>';
     return;
   }
+
+  // ordenar por data descendente no JS
+  const sorted = docs.slice().sort(function(a, b) {
+    return (b.data().dataManual || "").localeCompare(a.data().dataManual || "");
+  });
+
   tb.innerHTML = "";
-  docs.forEach(doc => {
+  sorted.forEach(function(doc) {
     const d = doc.data();
     const tr = document.createElement("tr");
     tr.innerHTML = '<td class="mono c-muted">' + fmtDate(d.dataManual) + '</td>' +
@@ -75,6 +83,7 @@ function renderSaldos(pessoa, docs) {
 function renderDespesas(pessoa, docs) {
   const id = pessoa === "Eduardo" ? "tb-desp-edu" : "tb-desp-luc";
   const tb = document.getElementById(id);
+
   if (!docs.length) {
     tb.innerHTML = '<tr><td colspan="4"><div class="empty">Sem despesas.</div></td></tr>';
     return;
@@ -82,19 +91,22 @@ function renderDespesas(pessoa, docs) {
 
   // agrupar por YYYY-MM
   const grupos = {};
-  docs.forEach(doc => {
+  docs.forEach(function(doc) {
     const d = doc.data();
     const key = (d.dataManual || "0000-00").substring(0, 7);
     if (!grupos[key]) grupos[key] = [];
     grupos[key].push(d);
   });
 
-  const meses = Object.keys(grupos).sort((a,b) => b.localeCompare(a));
-  tb.innerHTML = "";
+  // ordenar meses do mais recente para o mais antigo
+  const meses = Object.keys(grupos).sort(function(a, b) { return b.localeCompare(a); });
 
-  meses.forEach(mes => {
-    const lista = grupos[mes].sort((a,b) => (b.dataManual||"").localeCompare(a.dataManual||""));
-    const total = lista.reduce((s,d) => s + d.valor, 0);
+  tb.innerHTML = "";
+  meses.forEach(function(mes) {
+    const lista = grupos[mes].sort(function(a, b) {
+      return (b.dataManual || "").localeCompare(a.dataManual || "");
+    });
+    const total = lista.reduce(function(s, d) { return s + d.valor; }, 0);
 
     // cabeçalho do mês
     const trH = document.createElement("tr");
@@ -102,7 +114,7 @@ function renderDespesas(pessoa, docs) {
     trH.innerHTML = '<td colspan="4">📅 ' + fmtMes(mes) + '</td>';
     tb.appendChild(trH);
 
-    lista.forEach(d => {
+    lista.forEach(function(d) {
       const tr = document.createElement("tr");
       tr.innerHTML = '<td class="mono c-muted">' + fmtDate(d.dataManual) + '</td>' +
                      '<td>' + d.descricao + '</td>' +
@@ -115,7 +127,7 @@ function renderDespesas(pessoa, docs) {
     const trT = document.createElement("tr");
     trT.className = "month-total-row";
     trT.innerHTML = '<td colspan="3">Total ' + fmtMes(mes) + '</td>' +
-                    '<td>− ' + fmtVal(total) + '</td>';
+                    '<td class="mono c-red">− ' + fmtVal(total) + '</td>';
     tb.appendChild(trT);
   });
 }
@@ -129,12 +141,17 @@ function guardarSaldo(pessoa) {
   if (isNaN(val) || val <= 0) { alert("Insere um valor válido!"); return; }
   if (!data) { alert("Seleciona uma data!"); return; }
 
-  db.collection("saldos").add({ valor: val, quem: pessoa, dataManual: data, data: new Date(data) })
-    .then(() => {
-      document.getElementById(p + "-saldo-val").value = "";
-      document.getElementById(p + "-saldo-data").value = today();
-    })
-    .catch(err => alert("Erro: " + err.message));
+  db.collection("saldos").add({
+    valor: val,
+    quem: pessoa,
+    dataManual: data,
+    data: new Date(data)
+  })
+  .then(function() {
+    document.getElementById(p + "-saldo-val").value = "";
+    document.getElementById(p + "-saldo-data").value = today();
+  })
+  .catch(function(err) { alert("Erro: " + err.message); });
 }
 
 // ── Adicionar despesa ─────────────────────────────────────
@@ -145,48 +162,51 @@ function adicionarDespesa(pessoa) {
   const data = document.getElementById(p + "-data").value;
   const cat  = document.getElementById(p + "-cat").value;
 
-  if (!desc)           { alert("Preenche a descrição!"); return; }
+  if (!desc)              { alert("Preenche a descrição!"); return; }
   if (isNaN(val)||val<=0) { alert("Insere um valor válido!"); return; }
-  if (!data)           { alert("Seleciona uma data!"); return; }
-  if (!cat)            { alert("Seleciona uma categoria!"); return; }
+  if (!data)              { alert("Seleciona uma data!"); return; }
+  if (!cat)               { alert("Seleciona uma categoria!"); return; }
 
   db.collection("despesas").add({
-    descricao: desc, valor: val, categoria: cat,
-    quem: pessoa, dataManual: data, data: new Date(data)
+    descricao: desc,
+    valor: val,
+    categoria: cat,
+    quem: pessoa,
+    dataManual: data,
+    data: new Date(data)
   })
-  .then(() => {
+  .then(function() {
     document.getElementById(p + "-desc").value = "";
     document.getElementById(p + "-val").value  = "";
     document.getElementById(p + "-cat").value  = "";
     document.getElementById(p + "-data").value = today();
   })
-  .catch(err => alert("Erro: " + err.message));
+  .catch(function(err) { alert("Erro: " + err.message); });
 }
 
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-  // datas default
+
+  // datas default para hoje
   ["edu-saldo-data","luc-saldo-data","edu-data","luc-data"].forEach(function(id) {
     document.getElementById(id).value = today();
   });
 
-  ["Eduardo","Luciana"].forEach(function(pessoa) {
-    // saldos em tempo real
+  // listeners em tempo real — SEM orderBy para não precisar de índices
+  ["Eduardo", "Luciana"].forEach(function(pessoa) {
+
     db.collection("saldos")
-      .where("quem","==",pessoa)
-      .orderBy("data","desc")
+      .where("quem", "==", pessoa)
       .onSnapshot(function(snap) {
         renderSaldos(pessoa, snap.docs);
         recalcular(pessoa);
-      });
+      }, function(err) { console.error("Erro saldos:", err); });
 
-    // despesas em tempo real
     db.collection("despesas")
-      .where("quem","==",pessoa)
-      .orderBy("data","desc")
+      .where("quem", "==", pessoa)
       .onSnapshot(function(snap) {
         renderDespesas(pessoa, snap.docs);
         recalcular(pessoa);
-      });
+      }, function(err) { console.error("Erro despesas:", err); });
   });
 });
